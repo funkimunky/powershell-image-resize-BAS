@@ -116,14 +116,15 @@ Function Resize-Image() {
             $NewImage.InterpolationMode = $InterpolationMode
             $NewImage.PixelOffsetMode = $PixelOffsetMode
             $NewImage.DrawImage($OldImage, $(New-Object -TypeName System.Drawing.Rectangle -ArgumentList 0, 0, $Width, $Height))
+            
+            $OldImage.Dispose()
 
             If ($PSCmdlet.ShouldProcess("Resized image based on $Path", "save to $OutputPath")) {
                 $Bitmap.Save($OutputPath)
             }
             
             $Bitmap.Dispose()
-            $NewImage.Dispose()
-            $OldImage.Dispose()
+            $NewImage.Dispose()            
         }
     }
 }
