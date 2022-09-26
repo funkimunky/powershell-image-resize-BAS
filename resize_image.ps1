@@ -1,4 +1,4 @@
-<#
+﻿<#
 .SYNOPSIS
    Resize an image
 .DESCRIPTION
