@@ -1,4 +1,4 @@
-﻿<#
+<#
 .SYNOPSIS
    Resize an image
 .DESCRIPTION
@@ -23,6 +23,8 @@
    Sets the interpolation mode. Default is HighQualityBicubic.
 .PARAMETER PixelOffsetMode
    Sets the pixel offset mode. Default is HighQuality.
+.PARAMETER OverWrite
+    Sets the application to overwrite image with resized one. Y or N
 .EXAMPLE
    Resize-Image -Height 45 -Width 45 -ImagePath "Path/to/image.jpg"
 .EXAMPLE
@@ -55,7 +57,8 @@ Function Resize-Image() {
         [Parameter(Mandatory=$False)][System.Drawing.Drawing2D.SmoothingMode]$SmoothingMode = "HighQuality",
         [Parameter(Mandatory=$False)][System.Drawing.Drawing2D.InterpolationMode]$InterpolationMode = "HighQualityBicubic",
         [Parameter(Mandatory=$False)][System.Drawing.Drawing2D.PixelOffsetMode]$PixelOffsetMode = "HighQuality",
-        [Parameter(Mandatory=$False)][String]$NameModifier = "resized"
+        [Parameter(Mandatory=$False)][String]$NameModifier = "resized",
+        [Parameter(Mandatory=$False)][String]$OverWrite = "OverWrite"
     )
     Begin {
         If ($Width -and $Height -and $MaintainRatio) {
@@ -75,8 +78,13 @@ Function Resize-Image() {
             $Path = (Resolve-Path $Image).Path
             $Dot = $Path.LastIndexOf(".")
 
-            #Add name modifier (OriginalName_{$NameModifier}.jpg)
-            $OutputPath = $Path.Substring(0,$Dot) + "_" + $NameModifier + $Path.Substring($Dot,$Path.Length - $Dot)
+            If($OverWrite -eq 'y'){
+                $OutputPath = $Path.Substring(0,$Dot) + $Path.Substring($Dot,$Path.Length - $Dot)
+            }else{
+                #Add name modifier (OriginalName_{$NameModifier}.jpg)
+                $OutputPath = $Path.Substring(0,$Dot) + "_" + $NameModifier + $Path.Substring($Dot,$Path.Length - $Dot)
+            }
+            
             
             $OldImage = New-Object -TypeName System.Drawing.Bitmap -ArgumentList $Path
             # Grab these for use in calculations below. 
