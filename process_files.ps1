@@ -43,9 +43,24 @@ Function Get-images(){
     $exclude_list = $path_hash['exclude']
     $include_list = $path_hash['include']
     # $ImageList = Get-ChildItem -Path $include_list -Filter *.png -Recurse -Exclude $exclude_list | Where-Object { $_.Width -gt 400 -and $_.Height -gt 400 }
-    # $ImageList = Get-ChildItem -Path $include_list -Filter *.png -Recurse -Exclude $exclude_list 
+ 
+    $ImageList = Get-ChildItem -Path $include_list -Directory -Recurse 
+    # | ForEach-Object{
+    #     $allowed = $true
+    #     foreach ($exclude in $exclude_list) { 
+    #         $mynname = $_
+    #         $parentname = $_.Parent
+    #         if (($_.Parent -ilike $exclude) -Or ($_ -ilike $exclude)) { 
+    #             $allowed = $false
+    #             break
+    #         }
+    #     }
+    #     if ($allowed) {
+    #         $_
+    #     }
+    # } | Get-ChildItem -Filter *.png # | ForEach-Object { [System.Drawing.Image]::FromFile($_.FullName) } | Where-Object { $_.Width -gt 400 -and $_.Height -gt 400 }
 
-    $ImageList = Get-ChildItem -Path $include_list -Filter *.png -Recurse -Exclude $exclude_list 
+   
 
     return $ImageList
 
