@@ -14,8 +14,8 @@ foreach ($image in $ImageList)
     #Get the image information
     # $image = New-Object System.Drawing.Bitmap $ImageFile.Fullname
     #Get the image attributes
-    $ImageHeight = $image.Height
-    $ImageWidth = $image.Width
+    # $ImageHeight = $image.Height
+    # $ImageWidth = $image.Width
     #Close the image
     $image.Dispose()
     # If($ImageWidth -gt $ImageHeight)
