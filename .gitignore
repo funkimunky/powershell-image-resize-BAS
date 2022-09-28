@@ -10,3 +10,4 @@ test/.vscode/
 test-results.xml
 *.vsix
 *.DS_Store
+files/~$leStructureTest.docx
