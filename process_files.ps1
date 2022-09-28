@@ -1,4 +1,4 @@
-﻿Add-Type -AssemblyName System.Drawing
+Add-Type -AssemblyName System.Drawing
 Function Get-pathhash(){
     # add module as administrator with 
     # Install-Module -Name ImportExcel -Force
@@ -47,86 +47,45 @@ Function Get-Paths(){
 
     foreach($path in $include_list){
         $path = Get-Item -Path $path
-
-        $recursive_paths.Add($path)
+        $recursive_paths.Add($path.FullName) | Out-Null # https://stackoverflow.com/questions/10286164/function-return-value-in-powershell
 
         Get-ChildItem -Path $include_list -Directory -Recurse 
         | ForEach-Object{
             $allowed = $true
             foreach ($exclude in $exclude_list) { 
-                # $mynname = $_
-                # $parentname = $_.Parent
-                if (($_.Parent -ilike $exclude) -Or ($_ -ilike $exclude)) { 
+                if (($_.Parent -ilike $exclude) -Or ($_ -ilike $exclude)) {
                     $allowed = $false
                     break
                 }
             }
             if ($allowed) {
-                $recursive_paths.Add($_)
+                $recursive_paths.Add($_.FullName)
             }
-        }      
+        } | Out-Null # https://stackoverflow.com/questions/7325900/powershell-2-array-size-differs-between-return-value-and-caller
 
     }
-
-    $sys_paths = [System.Array]$recursive_paths
-
-  
-
-    # $recursive_paths_children = Get-ChildItem -Path $include_list -Directory -Recurse 
-    # | ForEach-Object
-    # {
-    #     $allowed = $true
-    #     foreach ($exclude in $exclude_list) { 
-    #         $mynname = $_
-    #         $parentname = $_.Parent
-    #         if (($_.Parent -ilike $exclude) -Or ($_ -ilike $exclude)) { 
-    #             $allowed = $false
-    #             break
-    #         }
-    #     }
-    #     if ($allowed) {
-    #         $_
-    #     }
-    # }
-
-    # foreach($childpath in $recursive_paths_children){
-    #     $recursive_paths.Add($childpath)
-    # }
     
-
-    return $sys_paths
+    return $recursive_paths
 }
 
 Function Get-images(){
     param (
-        $path_hash
+        $thispathlist
     )
-
-    
-    # $ImageList = Get-ChildItem -Path $include_list -Filter *.png -Recurse -Exclude $exclude_list | Where-Object { $_.Width -gt 400 -and $_.Height -gt 400 }
- 
-    $ImageList = Get-ChildItem -Path $include_list -Directory -Recurse 
-    # | ForEach-Object{
-    #     $allowed = $true
-    #     foreach ($exclude in $exclude_list) { 
-    #         $mynname = $_
-    #         $parentname = $_.Parent
-    #         if (($_.Parent -ilike $exclude) -Or ($_ -ilike $exclude)) { 
-    #             $allowed = $false
-    #             break
-    #         }
-    #     }
-    #     if ($allowed) {
-    #         $_
-    #     }
-    # } | Get-ChildItem -Filter *.png # | ForEach-Object { [System.Drawing.Image]::FromFile($_.FullName) } | Where-Object { $_.Width -gt 400 -and $_.Height -gt 400 }
-
-   
+    $ImageList = [System.Collections.ArrayList]::new()
+    $arrpathlist = [System.Collections.ArrayList]$thispathlist
+    foreach($path in $arrpathlist){
+        # $images = Get-ChildItem -Path $path -Filter *.png | Where-Object { $_.Width -gt 400 -and $_.Height -gt 400 }
+        Get-ChildItem -Path $path -Filter *.png|ForEach-Object{$ImageList.Add($_)}|Out-Null   
+    }   
 
     return $ImageList
 
 }
 
-$path_hash = Get-pathhash
-$recursive_paths = Get-Paths($path_hash)
-$image_list = Get-images($recursive_paths)
+
+$path_hash = Get-inclusions_exclusions
+$paths = Get-Paths($path_hash)
+$image_list = Get-images($paths)
+# Get-Paths($path_hash)
+$test
