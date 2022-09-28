@@ -1,5 +1,5 @@
-Add-Type -AssemblyName System.Drawing
-Function Get-pathhash(){
+﻿Add-Type -AssemblyName System.Drawing
+Function Get-inclusions_exclusions(){
     # add module as administrator with 
     # Install-Module -Name ImportExcel -Force
     # path with excel files
@@ -35,10 +35,8 @@ Function Get-pathhash(){
     return $return_hash
 }
 
-Function Get-Paths(){
-    param(
-        $path_hash
-    )
+Function Get-Paths{
+    param( $path_hash ) 
 
     $exclude_list = $path_hash['exclude']
     $include_list = $path_hash['include']
