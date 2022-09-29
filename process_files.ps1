@@ -1,4 +1,5 @@
 ﻿Add-Type -AssemblyName System.Drawing
+Import-Module ./Resize-Image/Resize-Image
 Function Get-inclusions_exclusions{
     [CmdletBinding()]
     param (     
