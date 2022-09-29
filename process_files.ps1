@@ -1,10 +1,14 @@
 ﻿Add-Type -AssemblyName System.Drawing
 Function Get-inclusions_exclusions{
+    [CmdletBinding()]
+    param (     
+        [string]$IncludeExcludePath
+    )
     # add module as administrator with 
     # Install-Module -Name ImportExcel -Force
     # path with excel files
     # (assuming you downloaded the sample data as instructed before)
-    Set-Location -Path "C:\Temp\excelsampledata\"
+    Set-Location -Path $IncludeExcludePath
     # Get-Help Import-Excel
     # $excel_obj = Import-Excel -Path .\financial.xlsx | Where-Object 'Month Number' -eq 12
     $paths_include = Import-Excel -Path .\path_list.xlsx -WorkSheetname 'include'
@@ -36,10 +40,13 @@ Function Get-inclusions_exclusions{
 }
 
 Function Get-Paths{
-    param( $path_hash ) 
+    [cmdletbinding()]
+    param( 
+        [hashtable]$ExcelPaths 
+        ) 
 
-    $exclude_list = $path_hash['exclude']
-    $include_list = $path_hash['include']
+    $exclude_list = $ExcelPaths['exclude']
+    $include_list = $ExcelPaths['include']
 
     $recursive_paths = [System.Collections.ArrayList]::new()
 
@@ -67,14 +74,21 @@ Function Get-Paths{
 }
 
 Function Get-images{
+    [cmdletbinding()]
     param (
-        $thispathlist
+        [System.Array]$ImagePaths,
+        [Int]$Width,
+        [Int]$Height
     )
     $ImageList = [System.Collections.ArrayList]::new()
-    $arrpathlist = [System.Collections.ArrayList]$thispathlist
+    $arrpathlist = [System.Collections.ArrayList]$ImagePaths
     foreach($path in $arrpathlist){
         # $images = Get-ChildItem -Path $path -Filter *.png | Where-Object { $_.Width -gt 400 -and $_.Height -gt 400 }
-        Get-ChildItem -Path $path -Filter *.png|ForEach-Object{$ImageList.Add($_)}|Out-Null   
+        Get-ChildItem -Path $path -Filter *.png | 
+        ForEach-Object { [System.Drawing.Image]::FromFile($_.FullName) } | 
+        Where-Object { $_.Width -gt $Width -and $_.Height -gt $Height } | 
+        ForEach-Object{$ImageList.Add($_)} |
+        Out-Null   
     }   
 
     return $ImageList
@@ -88,8 +102,8 @@ Function Process_Images{
 }
 
 
-$path_hash = Get-inclusions_exclusions
-$paths = Get-Paths($path_hash)
-$image_list = Get-images($paths)
-# Get-Paths($path_hash)
+$ExcelPaths = Get-inclusions_exclusions -IncludeExcludePath "C:\Temp\excelsampledata\"
+$paths = Get-Paths -ExcelPaths $ExcelPaths
+$image_list = Get-images -ImagePaths $paths -Width 400 -Height 400
+# Get-Paths($ExcelPaths)
 $test
