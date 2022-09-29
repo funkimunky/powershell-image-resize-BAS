@@ -83,26 +83,32 @@ Function Get-images{
     )
     $ImageList = [System.Collections.ArrayList]::new()
     $arrpathlist = [System.Collections.ArrayList]$ImagePaths
-    foreach($path in $arrpathlist){
-        # $images = Get-ChildItem -Path $path -Filter *.png | Where-Object { $_.Width -gt 400 -and $_.Height -gt 400 }
-        Get-ChildItem -Path $path -Filter *.png | 
-        ForEach-Object { [System.Drawing.Image]::FromFile($_.FullName) } | 
-        Where-Object { $_.Width -gt $Width -and $_.Height -gt $Height } | 
-        ForEach-Object{$ImageList.Add($_)} |
-        Out-Null   
-    }   
 
-    return $ImageList
+    foreach($path in $arrpathlist){
+        Get-ChildItem -Path $path -Filter *.png |         
+        ForEach-Object {            
+            $t = [System.Drawing.Image]::FromFile($_.FullName)                 
+            if ($t.Width -gt $Width -and $t.Height -gt $Height ) {
+                $ImageList.Add($_)
+            }
+            $t.Dispose() #need to close connection to bitmap so it can be overwritten
+        } | 
+        Out-Null   
+    } 
+
+    return [System.Collections.ArrayList]$ImageList
 
 }
 
 Function Process_Images{
     [cmdletbinding()]
     param (
-        [System.Collections.ArrayList]$ImageList
+        [System.Collections.ArrayList]$ImageList,
+        [string]$OverWrite
     )
     foreach($Image in $ImageList){
-        Resize-Image -width 400 -MaintainRatio -ImagePath $Image -WhatIf
+        # Resize-Image -width 400 -MaintainRatio -ImagePath $Image -OverWrite $OverWrite -WhatIf
+        Resize-Image -width 400 -MaintainRatio -ImagePath $Image -OverWrite $OverWrite
     }
 
 }
@@ -111,6 +117,6 @@ Function Process_Images{
 $ExcelPaths = Get-inclusions_exclusions -IncludeExcludePath "C:\Users\dwthomson\powershell_scripts\imageresize\powershell image resize BAS\files\"
 $paths = Get-Paths -ExcelPaths $ExcelPaths
 $image_list = Get-images -ImagePaths $paths -Width 400 -Height 400
-Process_Images -ImageList $image_list
+Process_Images -ImageList $image_list -OverWrite y
 # Get-Paths($ExcelPaths)
 $test
