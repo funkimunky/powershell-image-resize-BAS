@@ -25,6 +25,8 @@
    Sets the pixel offset mode. Default is HighQuality.
 .PARAMETER OverWrite
     Sets the application to overwrite image with resized one. Y or N
+.PARAMETER Longerside
+    resizes images longest side to dimension set in pixels. Maintains ratio.
 .EXAMPLE
    Resize-Image -Height 45 -Width 45 -ImagePath "Path/to/image.jpg"
 .EXAMPLE
@@ -51,8 +53,9 @@ Function Resize-Image() {
             }
         })][String[]]$ImagePath,
         [Parameter(Mandatory=$False)][Switch]$MaintainRatio,
+        [Parameter(Mandatory=$False, ParameterSetName="Longerside")][Int]$Longerside,
         [Parameter(Mandatory=$False, ParameterSetName="Absolute")][Int]$Height,
-        [Parameter(Mandatory=$False, ParameterSetName="Absolute")][Int]$Width,
+        [Parameter(Mandatory=$False, ParameterSetName="Absolute")][Int]$Width,        
         [Parameter(Mandatory=$False, ParameterSetName="Percent")][Double]$Percentage,
         [Parameter(Mandatory=$False)][System.Drawing.Drawing2D.SmoothingMode]$SmoothingMode = "HighQuality",
         [Parameter(Mandatory=$False)][System.Drawing.Drawing2D.InterpolationMode]$InterpolationMode = "HighQualityBicubic",
@@ -72,6 +75,16 @@ Function Resize-Image() {
         If ($Percentage -and $MaintainRatio) {
             Write-Warning "The MaintainRatio flag while using the Percentage parameter does nothing"
         }
+
+        If ($Longerside -and $Width -or $Longerside -and $height) {
+            Throw "Should only be longer side in pixels"
+        }
+
+        If ($Percentage -and $Longerside -or $MaintainRatio -and $Longerside) {
+            Throw "Percentage or maintain ratio cannot be used with longerside pixels flag"
+        }
+
+        
     }
     Process {
         ForEach ($Image in $ImagePath) {
@@ -92,9 +105,7 @@ Function Resize-Image() {
             $OldHeight = $OldImage.Height
             $OldWidth = $OldImage.Width
  
-            If ($MaintainRatio) {
-                $OldHeight = $OldImage.Height
-                $OldWidth = $OldImage.Width
+            If ($MaintainRatio) {                
                 If ($Height) {
                     $Width = $OldWidth / $OldHeight * $Height
                 }
@@ -108,6 +119,26 @@ Function Resize-Image() {
                 $Height = $OldHeight * $Product
                 $Width = $OldWidth * $Product
             }
+
+            If($Longerside){
+                If($OldWidth -gt $OldHeight){
+                    $ratio = $OldHeight / $OldWidth
+                    $width = $Longerside
+                    $height = $ratio * $Longerside
+
+                }
+                If($OldWidth -lt $OldHeight){
+                    $ratio = $OldWidth / $OldHeight
+                    $height = $Longerside
+                    $width = $ratio * $Longerside
+                }
+                If($OldWidth -eq $OldHeight){
+                    $Width = $Longerside
+                    $Height = $Longerside
+                }
+            }
+
+
 
             $Bitmap = New-Object -TypeName System.Drawing.Bitmap -ArgumentList $Width, $Height
             $NewImage = [System.Drawing.Graphics]::FromImage($Bitmap)
