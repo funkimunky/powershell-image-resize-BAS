@@ -129,3 +129,4 @@ Function Resize-Image() {
         }
     }
 }
+Export-ModuleMember -Function Resize-Image
