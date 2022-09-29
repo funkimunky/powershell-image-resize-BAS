@@ -79,6 +79,7 @@ Function Resize-Image() {
             $Dot = $Path.LastIndexOf(".")
 
             If($OverWrite -eq 'y'){
+                #Overite images)
                 $OutputPath = $Path.Substring(0,$Dot) + $Path.Substring($Dot,$Path.Length - $Dot)
             }else{
                 #Add name modifier (OriginalName_{$NameModifier}.jpg)
