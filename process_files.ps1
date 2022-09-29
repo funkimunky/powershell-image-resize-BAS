@@ -96,14 +96,20 @@ Function Get-images{
 }
 
 Function Process_Images{
+    [cmdletbinding()]
     param (
-        $thispathlist
+        [System.Collections.ArrayList]$ImageList
     )
+    foreach($Image in $ImageList){
+        Resize-Image -width 400 -MaintainRatio -ImagePath $Image -WhatIf
+    }
+
 }
 
 
 $ExcelPaths = Get-inclusions_exclusions -IncludeExcludePath "C:\Temp\excelsampledata\"
 $paths = Get-Paths -ExcelPaths $ExcelPaths
 $image_list = Get-images -ImagePaths $paths -Width 400 -Height 400
+Process_Images -ImageList $image_list
 # Get-Paths($ExcelPaths)
 $test
