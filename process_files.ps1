@@ -108,7 +108,7 @@ Function Process_Images{
 }
 
 
-$ExcelPaths = Get-inclusions_exclusions -IncludeExcludePath "C:\Temp\excelsampledata\"
+$ExcelPaths = Get-inclusions_exclusions -IncludeExcludePath "C:\Users\dwthomson\powershell_scripts\imageresize\powershell image resize BAS\files\"
 $paths = Get-Paths -ExcelPaths $ExcelPaths
 $image_list = Get-images -ImagePaths $paths -Width 400 -Height 400
 Process_Images -ImageList $image_list
