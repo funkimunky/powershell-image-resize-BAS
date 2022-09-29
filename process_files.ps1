@@ -1,5 +1,5 @@
 ﻿Add-Type -AssemblyName System.Drawing
-Function Get-inclusions_exclusions(){
+Function Get-inclusions_exclusions{
     # add module as administrator with 
     # Install-Module -Name ImportExcel -Force
     # path with excel files
@@ -66,7 +66,7 @@ Function Get-Paths{
     return $recursive_paths
 }
 
-Function Get-images(){
+Function Get-images{
     param (
         $thispathlist
     )
@@ -79,6 +79,12 @@ Function Get-images(){
 
     return $ImageList
 
+}
+
+Function Process_Images{
+    param (
+        $thispathlist
+    )
 }
 
 
