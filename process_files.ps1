@@ -86,20 +86,25 @@ Function Get-images{
     $arrpathlist = [System.Collections.ArrayList]$ImagePaths
 
     $counter = 1
+    :outer
     foreach($path in $arrpathlist){
         Get-ChildItem -Path $path -Filter *.jpg |         
-        ForEach-Object {            
-            $t = [System.Drawing.Image]::FromFile($_.FullName)                 
+        ForEach-Object {
+            $t = [System.Drawing.Image]::FromFile($_.FullName)             
             if ($t.Width -gt $Width -and $t.Height -gt $Height ) {
-                $ImageList.Add($_)
+                $ImageList.Add($_) 
+                $t.Dispose()     
+                if($counter -eq $BatchAmount){
+                    [string]$outputStr = 'batch limit of {0} reached' -f $BatchAmount
+                    Write-Host $outputStr -ForegroundColor Magenta | Out-Null
+                    break outer #breaking named loop https://stackoverflow.com/questions/36025696/break-out-of-inner-loop-only-in-nested-loop
+                }                       
+            }else{
+                $t.Dispose() #need to close connection to bitmap so it can be overwritten  
             }
-            $t.Dispose() #need to close connection to bitmap so it can be overwritten
+            $counter++
         } | 
-        Out-Null   
-        if($counter -eq $BatchAmount){
-            Write-Output "batch limit reached, exiting"
-            return
-        }
+        Out-Null         
     } 
 
     return [System.Collections.ArrayList]$ImageList
@@ -122,7 +127,7 @@ Function Process_Images{
 
 $ExcelPaths = Get-inclusions_exclusions -IncludeExcludePath "C:\Users\dwthomson\powershell_scripts\imageresize\powershell image resize BAS\files\"
 $paths = Get-Paths -ExcelPaths $ExcelPaths
-$image_list = Get-images -ImagePaths $paths -Width 1000 -Height 1000
+$image_list = Get-images -ImagePaths $paths -Width 1000 -Height 1000 -batch 20
 Process_Images -ImageList $image_list -OverWrite y
 # Get-Paths($ExcelPaths)
 $test
