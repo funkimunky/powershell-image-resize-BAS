@@ -1,4 +1,4 @@
-﻿Add-Type -AssemblyName System.Drawing
+Add-Type -AssemblyName System.Drawing
 Import-Module ./Resize-Image/Resize-Image -force
 Function Get-inclusions_exclusions{
     [CmdletBinding()]
@@ -12,8 +12,8 @@ Function Get-inclusions_exclusions{
     Set-Location -Path $IncludeExcludePath
     # Get-Help Import-Excel
     # $excel_obj = Import-Excel -Path .\financial.xlsx | Where-Object 'Month Number' -eq 12
-    $paths_include = Import-Excel -Path .\path_list.xlsx -WorkSheetname 'include'
-    $paths_exclude = Import-Excel -Path .\path_list.xlsx -WorkSheetname 'exclude'
+    $paths_include = Import-Excel -Path .\files\path_list.xlsx -WorkSheetname 'include'
+    $paths_exclude = Import-Excel -Path .\files\path_list.xlsx -WorkSheetname 'exclude'
     
     $return_hash = @{}
     $include_array = [System.Collections.ArrayList]::new()
@@ -115,19 +115,25 @@ Function Process_Images{
     [cmdletbinding()]
     param (
         [System.Collections.ArrayList]$ImageList,
-        [string]$OverWrite
+        [string]$OverWrite,
+        [string]$WhatIf = $null
     )
+     
     foreach($Image in $ImageList){
         # Resize-Image -width 400 -MaintainRatio -ImagePath $Image -OverWrite $OverWrite -WhatIf
-        Resize-Image -ImagePath $Image -Longerside 1000 -OverWrite $OverWrite -WhatIf
+        if($WhatIf){
+            Resize-Image -ImagePath $Image -Longerside 1000 -OverWrite $OverWrite -WhatIf
+        }else {
+            Resize-Image -ImagePath $Image -Longerside 1000 -OverWrite $OverWrite -WhatIf
+        }
+        
+        
     }
 
 }
 
 
-$ExcelPaths = Get-inclusions_exclusions -IncludeExcludePath "C:\Users\dwthomson\powershell_scripts\imageresize\powershell image resize BAS\files\"
+$ExcelPaths = Get-inclusions_exclusions -IncludeExcludePath $PSScriptRoot
 $paths = Get-Paths -ExcelPaths $ExcelPaths
 $image_list = Get-images -ImagePaths $paths -Width 1000 -Height 1000 -batch 20
-Process_Images -ImageList $image_list -OverWrite y
-# Get-Paths($ExcelPaths)
-$test
+Process_Images -ImageList $image_list -OverWrite y -WhatIf
