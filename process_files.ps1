@@ -1,10 +1,15 @@
 ﻿Add-Type -AssemblyName System.Drawing
 Import-Module ./Resize-Image/Resize-Image -force
-Function Get-inclusions_exclusions{
+
+Import-Module -Name $PSScriptRoot/modules/ImportExcel -force
+Function Get-pathfile{
     [CmdletBinding()]
-    param (     
+    param (      
+        [Parameter(Position = 0, Mandatory=$true)]    
+        [ValidateNotNullOrEmpty()]
         [string]$IncludeExcludePath
     )
+
     # add module as administrator with 
     # Install-Module -Name ImportExcel -Force
     # path with excel files
@@ -40,9 +45,11 @@ Function Get-inclusions_exclusions{
     return $return_hash
 }
 
-Function Get-Paths{
+Function Get-Imagepaths{
     [cmdletbinding()]
     param( 
+        [Parameter(Position = 0, Mandatory=$true)]
+        [ValidateNotNullOrEmpty()]
         [hashtable]$ExcelPaths 
         ) 
 
@@ -74,16 +81,18 @@ Function Get-Paths{
     return $recursive_paths
 }
 
-Function Get-images{
+Function Get-imagelist{
     [cmdletbinding()]
     param (
-        [System.Array]$ImagePaths,
+        [Parameter(Position = 0, Mandatory=$true)]
+        [ValidateNotNullOrEmpty()]
+        [System.Array]$paths,
         [Int]$Width,
         [Int]$Height,
         [Int]$BatchAmount = 10
     )
     $ImageList = [System.Collections.ArrayList]::new()
-    $arrpathlist = [System.Collections.ArrayList]$ImagePaths
+    $arrpathlist = [System.Collections.ArrayList]$paths
 
     $counter = 1
     :outer
@@ -111,29 +120,50 @@ Function Get-images{
 
 }
 
-Function Process_Images{
-    [cmdletbinding()]
+Function Process_Images {
+    [cmdletbinding(SupportsShouldProcess = $true, ConfirmImpact = "High")]
     param (
-        [System.Collections.ArrayList]$ImageList,
-        [string]$OverWrite,
-        [string]$WhatIf = $null
+        [Parameter(Position = 0, Mandatory = $true)]
+        [ValidateNotNullOrEmpty()]
+        [System.Collections.ArrayList]$paths,
+        [System.Management.Automation.SwitchParameter]$OverWrite               
     )
-     
-    foreach($Image in $ImageList){
-        # Resize-Image -width 400 -MaintainRatio -ImagePath $Image -OverWrite $OverWrite -WhatIf
-        if($WhatIf){
-            Resize-Image -ImagePath $Image -Longerside 1000 -OverWrite $OverWrite -WhatIf
-        }else {
-            Resize-Image -ImagePath $Image -Longerside 1000 -OverWrite $OverWrite -WhatIf
-        }
-        
-        
-    }
+    begin 
+    {
 
+    }
+    process 
+    {
+        try 
+        {
+            foreach ($Image in $paths) 
+            {
+                $commonParams = @{}
+                if($WhatIfPreference.IsPresent){$commonParams.Add('WhatIf', $true)}
+                if($ConfirmPreference.IsPresent){$commonParams.Add('Confirm', $true)}
+                Resize-Image -ImagePath $Image -Longerside 1000 -OverWrite @commonParams
+                
+                # if ($PSCmdlet.ShouldProcess(
+                #     # ("Resizing existing file {0}" -f $FilePath),
+                #     # ("Would you like to overwrite {0}?" -f $FilePath),
+                #     # "Create File Prompt"
+                #     )
+                #     )
+                #     {
+                #         Resize-Image -ImagePath $Image -Longerside 1000 -OverWrite
+                #     }
+            }
+        }
+        catch 
+        {
+            Throw "$($_.Exception.Message)"
+        }
+    }
+    end {}
 }
 
 
-$ExcelPaths = Get-inclusions_exclusions -IncludeExcludePath $PSScriptRoot
-$paths = Get-Paths -ExcelPaths $ExcelPaths
-$image_list = Get-images -ImagePaths $paths -Width 1000 -Height 1000 -batch 20
-Process_Images -ImageList $image_list -OverWrite y -WhatIf
+$ExcelPaths = Get-pathfile -IncludeExcludePath $PSScriptRoot
+$paths = Get-Imagepaths -ExcelPaths $ExcelPaths
+$image_list = Get-imagelist -paths $paths -Width 1000 -Height 1000 -batch 20
+Process_Images -paths $image_list -OverWrite -Confirm
