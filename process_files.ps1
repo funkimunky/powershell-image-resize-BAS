@@ -166,4 +166,4 @@ Function Process_Images {
 $ExcelPaths = Get-pathfile -IncludeExcludePath $PSScriptRoot
 $paths = Get-Imagepaths -ExcelPaths $ExcelPaths
 $image_list = Get-imagelist -paths $paths -Width 1000 -Height 1000 -batch 20
-Process_Images -paths $image_list -OverWrite -WhatIf
+Process_Images -paths $image_list -OverWrite -Confirm
