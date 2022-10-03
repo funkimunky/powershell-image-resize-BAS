@@ -121,7 +121,9 @@ Function Get-imagelist{
 }
 
 Function Process_Images {
-    [cmdletbinding(SupportsShouldProcess = $true, ConfirmImpact = "High")]
+    [cmdletbinding(
+        SupportsShouldProcess = $true,
+        ConfirmImpact = "High")]
     param (
         [Parameter(Position = 0, Mandatory = $true)]
         [ValidateNotNullOrEmpty()]
