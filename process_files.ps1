@@ -1,10 +1,15 @@
-﻿Add-Type -AssemblyName System.Drawing
+Add-Type -AssemblyName System.Drawing
 Import-Module ./Resize-Image/Resize-Image -force
-Function Get-inclusions_exclusions{
+
+Import-Module -Name $PSScriptRoot/modules/ImportExcel -force
+Function Get-pathfile{
     [CmdletBinding()]
-    param (     
+    param (      
+        [Parameter(Position = 0, Mandatory=$true)]    
+        [ValidateNotNullOrEmpty()]
         [string]$IncludeExcludePath
     )
+
     # add module as administrator with 
     # Install-Module -Name ImportExcel -Force
     # path with excel files
