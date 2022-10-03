@@ -45,9 +45,11 @@ Function Get-pathfile{
     return $return_hash
 }
 
-Function Get-Paths{
+Function Get-Imagepaths{
     [cmdletbinding()]
     param( 
+        [Parameter(Position = 0, Mandatory=$true)]
+        [ValidateNotNullOrEmpty()]
         [hashtable]$ExcelPaths 
         ) 
 
@@ -79,16 +81,18 @@ Function Get-Paths{
     return $recursive_paths
 }
 
-Function Get-images{
+Function Get-imagelist{
     [cmdletbinding()]
     param (
-        [System.Array]$ImagePaths,
+        [Parameter(Position = 0, Mandatory=$true)]
+        [ValidateNotNullOrEmpty()]
+        [System.Array]$paths,
         [Int]$Width,
         [Int]$Height,
         [Int]$BatchAmount = 10
     )
     $ImageList = [System.Collections.ArrayList]::new()
-    $arrpathlist = [System.Collections.ArrayList]$ImagePaths
+    $arrpathlist = [System.Collections.ArrayList]$paths
 
     $counter = 1
     :outer
