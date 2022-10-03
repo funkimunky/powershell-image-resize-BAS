@@ -38,32 +38,35 @@
    Written By: 
    Christopher Walker
 #>
-Function Resize-Image() {
+Function Resize-Image() 
+{
     [CmdLetBinding(
-        SupportsShouldProcess=$true, 
-        PositionalBinding=$false,
-        ConfirmImpact="Medium",
-        DefaultParameterSetName="Absolute"
+        SupportsShouldProcess = $true, 
+        PositionalBinding = $false,
+        ConfirmImpact = "Medium",
+        DefaultParameterSetName = "Absolute"
     )]
-    Param (
-        [Parameter(Mandatory=$True)]
+    Param 
+    (
+        [Parameter(Mandatory = $True)]
         [ValidateScript({
-            $_ | ForEach-Object {
-                Test-Path $_
-            }
-        })][String[]]$ImagePath,
-        [Parameter(Mandatory=$False)][Switch]$MaintainRatio,
-        [Parameter(Mandatory=$False, ParameterSetName="Longerside")][Int]$Longerside,
-        [Parameter(Mandatory=$False, ParameterSetName="Absolute")][Int]$Height,
-        [Parameter(Mandatory=$False, ParameterSetName="Absolute")][Int]$Width,        
-        [Parameter(Mandatory=$False, ParameterSetName="Percent")][Double]$Percentage,
-        [Parameter(Mandatory=$False)][System.Drawing.Drawing2D.SmoothingMode]$SmoothingMode = "HighQuality",
-        [Parameter(Mandatory=$False)][System.Drawing.Drawing2D.InterpolationMode]$InterpolationMode = "HighQualityBicubic",
-        [Parameter(Mandatory=$False)][System.Drawing.Drawing2D.PixelOffsetMode]$PixelOffsetMode = "HighQuality",
-        [Parameter(Mandatory=$False)][String]$NameModifier = "resized",
-        [Parameter(Mandatory=$False)][String]$OverWrite = "OverWrite"
+                $_ | ForEach-Object {
+                    Test-Path $_
+                }
+            })][String[]]$ImagePath,
+        [Parameter(Mandatory = $False)][Switch]$MaintainRatio,
+        [Parameter(Mandatory = $False, ParameterSetName = "Longerside")][Int]$Longerside,
+        [Parameter(Mandatory = $False, ParameterSetName = "Absolute")][Int]$Height,
+        [Parameter(Mandatory = $False, ParameterSetName = "Absolute")][Int]$Width,        
+        [Parameter(Mandatory = $False, ParameterSetName = "Percent")][Double]$Percentage,
+        [Parameter(Mandatory = $False)][System.Drawing.Drawing2D.SmoothingMode]$SmoothingMode = "HighQuality",
+        [Parameter(Mandatory = $False)][System.Drawing.Drawing2D.InterpolationMode]$InterpolationMode = "HighQualityBicubic",
+        [Parameter(Mandatory = $False)][System.Drawing.Drawing2D.PixelOffsetMode]$PixelOffsetMode = "HighQuality",
+        [Parameter(Mandatory = $False)][String]$NameModifier = "resized",
+        [Parameter(Mandatory = $False)][System.Management.Automation.SwitchParameter]$OverWrite
     )
-    Begin {
+    Begin 
+    {
         If ($Width -and $Height -and $MaintainRatio) {
             Throw "Absolute Width and Height cannot be given with the MaintainRatio parameter."
         }
@@ -86,78 +89,90 @@ Function Resize-Image() {
 
         
     }
-    Process {
-        ForEach ($Image in $ImagePath) {
-            $Path = (Resolve-Path $Image).Path
-            $Dot = $Path.LastIndexOf(".")
-
-            If($OverWrite -eq 'y'){
-                #Overite images)
-                $OutputPath = $Path.Substring(0,$Dot) + $Path.Substring($Dot,$Path.Length - $Dot)
-            }else{
-                #Add name modifier (OriginalName_{$NameModifier}.jpg)
-                $OutputPath = $Path.Substring(0,$Dot) + "_" + $NameModifier + $Path.Substring($Dot,$Path.Length - $Dot)
-            }
-            
-            
-            $OldImage = New-Object -TypeName System.Drawing.Bitmap -ArgumentList $Path
-            # Grab these for use in calculations below. 
-            $OldHeight = $OldImage.Height
-            $OldWidth = $OldImage.Width
- 
-            If ($MaintainRatio) {                
-                If ($Height) {
-                    $Width = $OldWidth / $OldHeight * $Height
+    Process 
+    {
+        try 
+        {
+            ForEach ($Image in $ImagePath) {
+                $Path = (Resolve-Path $Image).Path
+                $Dot = $Path.LastIndexOf(".")
+    
+                switch ($OverWrite.IsPresent) {
+                    $true {
+                            # Overite images
+                            $OutputPath = $Path.Substring(0, $Dot) + $Path.Substring($Dot, $Path.Length - $Dot)
+                        }
+                    $false {
+                            # rename images
+                            $OutputPath = $Path.Substring(0, $Dot) + "_" + $NameModifier + $Path.Substring($Dot, $Path.Length - $Dot)
+                        }
+                                      
                 }
-                If ($Width) {
-                    $Height = $OldHeight / $OldWidth * $Width
+
+                $OldImage = New-Object -TypeName System.Drawing.Bitmap -ArgumentList $Path
+                # Grab these for use in calculations below. 
+                $OldHeight = $OldImage.Height
+                $OldWidth = $OldImage.Width
+
+                If ($MaintainRatio) {                
+                    If ($Height) {
+                        $Width = $OldWidth / $OldHeight * $Height
+                    }
+                    If ($Width) {
+                        $Height = $OldHeight / $OldWidth * $Width
+                    }
                 }
-            }
- 
-            If ($Percentage) {
-                $Product = ($Percentage / 100)
-                $Height = $OldHeight * $Product
-                $Width = $OldWidth * $Product
-            }
 
-            If($Longerside){
-                If($OldWidth -gt $OldHeight){
-                    $ratio = $OldHeight / $OldWidth
-                    $width = $Longerside
-                    $height = $ratio * $Longerside
-
+                If ($Percentage) {
+                    $Product = ($Percentage / 100)
+                    $Height = $OldHeight * $Product
+                    $Width = $OldWidth * $Product
                 }
-                If($OldWidth -lt $OldHeight){
-                    $ratio = $OldWidth / $OldHeight
-                    $height = $Longerside
-                    $width = $ratio * $Longerside
+
+                If ($Longerside) {
+                    If ($OldWidth -gt $OldHeight) {
+                        $ratio = $OldHeight / $OldWidth
+                        $width = $Longerside
+                        $height = $ratio * $Longerside
+
+                    }
+                    If ($OldWidth -lt $OldHeight) {
+                        $ratio = $OldWidth / $OldHeight
+                        $height = $Longerside
+                        $width = $ratio * $Longerside
+                    }
+                    If ($OldWidth -eq $OldHeight) {
+                        $Width = $Longerside
+                        $Height = $Longerside
+                    }
                 }
-                If($OldWidth -eq $OldHeight){
-                    $Width = $Longerside
-                    $Height = $Longerside
+
+
+
+                $Bitmap = New-Object -TypeName System.Drawing.Bitmap -ArgumentList $Width, $Height
+                $NewImage = [System.Drawing.Graphics]::FromImage($Bitmap)
+        
+                #Retrieving the best quality possible
+                $NewImage.SmoothingMode = $SmoothingMode
+                $NewImage.InterpolationMode = $InterpolationMode
+                $NewImage.PixelOffsetMode = $PixelOffsetMode
+                $NewImage.DrawImage($OldImage, $(New-Object -TypeName System.Drawing.Rectangle -ArgumentList 0, 0, $Width, $Height))
+    
+                $OldImage.Dispose()
+
+                If ($PSCmdlet.ShouldProcess("Resized image based on $Path", "save to $OutputPath")) {
+                    $Bitmap.Save($OutputPath)
                 }
-            }
-
-
-
-            $Bitmap = New-Object -TypeName System.Drawing.Bitmap -ArgumentList $Width, $Height
-            $NewImage = [System.Drawing.Graphics]::FromImage($Bitmap)
-             
-            #Retrieving the best quality possible
-            $NewImage.SmoothingMode = $SmoothingMode
-            $NewImage.InterpolationMode = $InterpolationMode
-            $NewImage.PixelOffsetMode = $PixelOffsetMode
-            $NewImage.DrawImage($OldImage, $(New-Object -TypeName System.Drawing.Rectangle -ArgumentList 0, 0, $Width, $Height))
-            
-            $OldImage.Dispose()
-
-            If ($PSCmdlet.ShouldProcess("Resized image based on $Path", "save to $OutputPath")) {
-                $Bitmap.Save($OutputPath)
-            }
-            
-            $Bitmap.Dispose()
-            $NewImage.Dispose()            
+    
+                $Bitmap.Dispose()
+                $NewImage.Dispose()            
         }
+                    }
+        catch 
+        {
+            Throw "$($_.Exception.Message)"
+        }
+        
     }
 }
 Export-ModuleMember -Function Resize-Image
