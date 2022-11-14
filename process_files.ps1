@@ -198,8 +198,8 @@ Function Get-Imagepaths{
     $recursive_paths = [System.Collections.ArrayList]::new()
 
     foreach($path in $include_list){
-        $path = Get-Item -Path $path
-        $recursive_paths.Add($path.FullName) | Out-Null # https://stackoverflow.com/questions/10286164/function-return-value-in-powershell
+        $systempath = Get-Item -Path $path
+        $recursive_paths.Add($systempath.FullName) | Out-Null # https://stackoverflow.com/questions/10286164/function-return-value-in-powershell
 
         Get-ChildItem -Path $include_list -Directory -Recurse 
         | ForEach-Object{
@@ -228,7 +228,7 @@ Function Get-imagelist{
         [System.Array]$paths,
         [Int]$Width,
         [Int]$Height,
-        [Int]$BatchAmount = 10
+        [Int]$BatchAmount = 5000
     )
     $ImageList = [System.Collections.ArrayList]::new()
     $arrpathlist = [System.Collections.ArrayList]$paths
@@ -281,5 +281,5 @@ Function Set-ProcessImages {
 
 $ExcelPaths = Get-pathfile -IncludeExcludePath $PSScriptRoot
 $paths = Get-Imagepaths -ExcelPaths $ExcelPaths
-$image_list = Get-imagelist -paths $paths -Width 1000 -Height 1000 -batch 20
-Set-ProcessImages -paths $image_list -OverWrite -WhatIf
+$image_list = Get-imagelist -paths $paths -Width 2000 -Height 2000 -batch 100
+Set-ProcessImages -paths $image_list -OverWrite
