@@ -1,7 +1,7 @@
 ﻿Add-Type -AssemblyName System.Drawing
 Import-Module -Name $PSScriptRoot/modules/ImportExcel -force
 
-
+$origional_size_total = 0.0
 Function Resize-Image() 
 {
     [CmdLetBinding(
@@ -13,11 +13,7 @@ Function Resize-Image()
     Param 
     (
         [Parameter(Mandatory = $True)]
-        [ValidateScript({
-                $_ | ForEach-Object {
-                    Test-Path $_
-                }
-            })][String[]]$ImagePath,
+        [ValidateScript({$_ | ForEach-Object { Test-Path $_ } })][String[]]$ImagePath,
         [Parameter(Mandatory = $False)][Switch]$MaintainRatio,
         [Parameter(Mandatory = $False, ParameterSetName = "Longerside")][Int]$Longerside,
         [Parameter(Mandatory = $False, ParameterSetName = "Absolute")][Int]$Height,
@@ -60,6 +56,7 @@ Function Resize-Image()
             ForEach ($Image in $ImagePath) {
                 $Path = (Resolve-Path $Image).Path
                 $Dot = $Path.LastIndexOf(".")
+                
     
                 switch ($OverWrite.IsPresent) {
                     $true {
@@ -72,6 +69,8 @@ Function Resize-Image()
                         }
                                       
                 }
+
+                $origional_size_total += Get-Size-Item($Image)
 
                 $OldImage = New-Object -TypeName System.Drawing.Bitmap -ArgumentList $Path
                 # Grab these for use in calculations below. 
@@ -138,6 +137,84 @@ Function Resize-Image()
         }
         
     }
+}
+
+
+function Get-Size
+{
+    param([string]$pth)
+    $size = "{0:n2}" -f ((Get-ChildItem -path $pth -recurse | measure-object -property length -sum).sum /1mb) + " mb"
+    Return $size
+}
+
+function Get-Size-Kb
+{
+    param([string]$pth)
+    $size = "{0:n2}" -f ((Get-ChildItem -path $pth -recurse | measure-object -property length -sum).sum /1kb) + " kb"
+    Return $size
+}
+
+function Get-Size-Item
+{
+    param([string]$pth)
+    $size = "{0:n2}" -f ((Get-Item -path $pth | measure-object -property length -sum).sum /1mb)
+    Return [float]$size
+}
+
+function Get-Size-Item-Kb
+{
+    param([string]$pth)
+    $size = "{0:n2}" -f ((Get-Item -path $pth | measure-object -property length -sum).sum /1kb) + " kb"
+    Return $size
+}
+
+
+
+function Compress-Image() {
+    param([string]$type)
+
+    $params = switch ($type) {
+        "jpg" { "-compress jpeg -quality 82" }
+        "gif" { "-fuzz 10% -layers Optimize" }
+        "png" { "-depth 24 -define png:compression-filter=2 -define png:compression-level=9 -define png:compression-strategy=1" }
+    }
+
+    if ($report) {
+        Write-Output ""
+        Write-Output "Listing $type files that would be included for compression with params: $params"
+    } else {
+        Write-Output ""
+        Write-Output "Compressing $type files with parameters: $params"
+    }
+    
+    Get-Item $path -Include "*.$type" | 
+        Where-Object {
+            $_.Length/1kb -gt $minSize
+        } | 
+        Sort-Object -Descending length |
+        ForEach-Object {
+            $file = "'" + $_.FullName + "'"
+        
+            if ($report) {
+                $fSize = Get-Size-Kb($file)
+                Write-Output "$file - $fSize"
+            } else {
+                if ($verbose) {
+                    Write-Output "Compressing $file"
+                    $fileStartSize = Get-Size-Kb($file)
+                }
+        
+                # compress image
+                if ($report -eq $False) {
+                    Invoke-Expression "magick $file $params $file"
+                }
+
+                if ($verbose) {
+                    $fileEndSize = Get-Size-Kb($file)
+                    Write-Output "Reduced from $fileStartSize to $fileEndSize"
+                }
+            }
+        }
 }
 
 
@@ -239,7 +316,7 @@ Function Get-imagelist{
         Get-ChildItem -Path $path -Filter *.jpg |         
         ForEach-Object {
             $t = [System.Drawing.Image]::FromFile($_.FullName)             
-            if ($t.Width -gt $Width -and $t.Height -gt $Height ) {
+            if ($t.Width -gt $Width -or $t.Height -gt $Height ) {
                 $ImageList.Add($_) 
                 $t.Dispose()     
                 if($counter -eq $BatchAmount){
@@ -259,27 +336,29 @@ Function Get-imagelist{
 
 }
 
-Function Set-ProcessImages {
-    [cmdletBinding( SupportsShouldProcess = $true )]
-    param (
-        [System.Collections.ArrayList]$paths,
-        [System.Management.Automation.SwitchParameter]$OverWrite               
-    )   
-    try 
-    {
-        foreach ($Image in $paths) 
-        {
-            Resize-Image -ImagePath $Image -Longerside 1000 -OverWrite               
-        }
-    }
-    catch 
-    {
-        Throw "$($_.Exception.Message)"
-    }  
-}
+# Function Set-ProcessImages {
+#     [cmdletBinding( SupportsShouldProcess = $true )]
+#     param (
+#         [System.Collections.ArrayList]$paths,
+#         [System.Management.Automation.SwitchParameter]$OverWrite,
 
+#     )   
+#     try 
+#     {
+#         foreach ($Image in $paths) 
+#         {
+#             Resize-Image -ImagePath $Image -Longerside 1000 -OverWrite
+#         }            
+#     }
+#     catch 
+#     {
+#         Throw "$($_.Exception.Message)"
+#     }  
+# }
 
+$longerSide = 3000
 $ExcelPaths = Get-pathfile -IncludeExcludePath $PSScriptRoot
 $paths = Get-Imagepaths -ExcelPaths $ExcelPaths
-$image_list = Get-imagelist -paths $paths -Width 2000 -Height 2000 -batch 100
-Set-ProcessImages -paths $image_list -OverWrite
+$image_list = Get-imagelist -paths $paths -Width $longerSide -Height $longerSide -batch 5000
+Resize-Image -ImagePath $image_list -Longerside $longerSide -OverWrite -InterpolationMode Default -SmoothingMode Default -PixelOffsetMode Default -Verbose
+# Set-ProcessImages -paths $image_list -OverWrite
