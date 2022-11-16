@@ -2,6 +2,36 @@
 Import-Module -Name $PSScriptRoot/modules/ImportExcel -force
 
 $origional_size_total = 0.0
+
+function Get-Size
+{
+    param([string]$pth)
+    $size = "{0:n2}" -f ((Get-ChildItem -path $pth -recurse | measure-object -property length -sum).sum /1mb) + " mb"
+    Return $size
+}
+
+function Get-Size-Kb
+{
+    param([string]$pth)
+    $size = "{0:n2}" -f ((Get-ChildItem -path $pth -recurse | measure-object -property length -sum).sum /1kb) + " kb"
+    Return $size
+}
+
+function Get-Size-Item
+{
+    param([string]$pth)
+    $size = "{0:n2}" -f ((Get-Item -path $pth | measure-object -property length -sum).sum /1mb)
+    Return [float]$size
+}
+
+function Get-Size-Item-Kb
+{
+    param([string]$pth)
+    $size = "{0:n2}" -f ((Get-Item -path $pth | measure-object -property length -sum).sum /1kb) + " kb"
+    Return $size
+}
+
+
 Function Resize-Image() 
 {
     [CmdLetBinding(
@@ -120,11 +150,15 @@ Function Resize-Image()
                 $NewImage.InterpolationMode = $InterpolationMode
                 $NewImage.PixelOffsetMode = $PixelOffsetMode
                 $NewImage.DrawImage($OldImage, $(New-Object -TypeName System.Drawing.Rectangle -ArgumentList 0, 0, $Width, $Height))
+               
     
                 $OldImage.Dispose()                
 
                 If ($PSCmdlet.ShouldProcess("Resized image based on $Path", "save to $OutputPath")) {
                     $Bitmap.Save($OutputPath)
+                    # [System.String]$type = "jpg"  
+                    # $typetype = $type.GetType()
+                    Compress-Image -type "jpg" -path $OutputPath        
                 }
     
                 $Bitmap.Dispose()
@@ -139,39 +173,18 @@ Function Resize-Image()
     }
 }
 
-
-function Get-Size
-{
-    param([string]$pth)
-    $size = "{0:n2}" -f ((Get-ChildItem -path $pth -recurse | measure-object -property length -sum).sum /1mb) + " mb"
-    Return $size
-}
-
-function Get-Size-Kb
-{
-    param([string]$pth)
-    $size = "{0:n2}" -f ((Get-ChildItem -path $pth -recurse | measure-object -property length -sum).sum /1kb) + " kb"
-    Return $size
-}
-
-function Get-Size-Item
-{
-    param([string]$pth)
-    $size = "{0:n2}" -f ((Get-Item -path $pth | measure-object -property length -sum).sum /1mb)
-    Return [float]$size
-}
-
-function Get-Size-Item-Kb
-{
-    param([string]$pth)
-    $size = "{0:n2}" -f ((Get-Item -path $pth | measure-object -property length -sum).sum /1kb) + " kb"
-    Return $size
-}
-
-
-
 function Compress-Image() {
-    param([string]$type)
+    [CmdLetBinding(
+        SupportsShouldProcess = $true, 
+        PositionalBinding = $false,
+        ConfirmImpact = "Low",
+        DefaultParameterSetName = "Absolute"
+    )]
+    param(
+        [Parameter(Mandatory = $True)][System.String]$type,
+        [Parameter(Mandatory = $True)][string]$path,
+        [Parameter(Mandatory = $False)][Switch]$report
+    )
 
     $params = switch ($type) {
         "jpg" { "-compress jpeg -quality 82" }
@@ -180,11 +193,11 @@ function Compress-Image() {
     }
 
     if ($report) {
-        Write-Output ""
-        Write-Output "Listing $type files that would be included for compression with params: $params"
+        # Write-Output ""
+        # Write-Output "Listing $type files that would be included for compression with params: $params"
     } else {
-        Write-Output ""
-        Write-Output "Compressing $type files with parameters: $params"
+        # Write-Output ""
+        # Write-Output "Compressing $type files with parameters: $params"
     }
     
     Get-Item $path -Include "*.$type" | 
@@ -196,12 +209,12 @@ function Compress-Image() {
             $file = "'" + $_.FullName + "'"
         
             if ($report) {
-                $fSize = Get-Size-Kb($file)
-                Write-Output "$file - $fSize"
+                # $fSize = Get-Size-Kb($file)
+                # Write-Output "$file - $fSize"
             } else {
                 if ($verbose) {
-                    Write-Output "Compressing $file"
-                    $fileStartSize = Get-Size-Kb($file)
+                    # Write-Output "Compressing $file"
+                    # $fileStartSize = Get-Size-Kb($file)
                 }
         
                 # compress image
@@ -210,8 +223,8 @@ function Compress-Image() {
                 }
 
                 if ($verbose) {
-                    $fileEndSize = Get-Size-Kb($file)
-                    Write-Output "Reduced from $fileStartSize to $fileEndSize"
+                    # $fileEndSize = Get-Size-Kb($file)
+                    # Write-Output "Reduced from $fileStartSize to $fileEndSize"
                 }
             }
         }
