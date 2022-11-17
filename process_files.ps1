@@ -145,9 +145,7 @@ Function Resize-Image() {
                 $OldImage.Dispose()                
 
                 If ($PSCmdlet.ShouldProcess("Resized image based on $Path", "save to $OutputPath")) {
-                    $Bitmap.Save($OutputPath)
-                    # [System.String]$type = "jpg"  
-                    # $typetype = $type.GetType()
+                    $Bitmap.Save($OutputPath)                   
                     Compress-Image -type "jpg" -path $OutputPath        
                 }
     
