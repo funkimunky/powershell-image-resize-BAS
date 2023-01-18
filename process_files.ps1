@@ -339,7 +339,7 @@ Function Get-imagelist{
 
 }
 
-$longerSide = 3000
+$longerSide = 2500
 Write-Output "Started processing $(Get-Date -Format u)"
 $ExcelPaths = Get-pathfile -IncludeExcludePath $PSScriptRoot
 $paths = Get-Imagepaths -ExcelPaths $ExcelPaths
