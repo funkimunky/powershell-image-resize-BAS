@@ -141,7 +141,12 @@ Function Resize-Image() {
                 $NewImage.PixelOffsetMode = $PixelOffsetMode
                 $NewImage.DrawImage($OldImage, $(New-Object -TypeName System.Drawing.Rectangle -ArgumentList 0, 0, $Width, $Height))
                
-    
+                #
+                # probably need to use
+                # Exception calling "Save" with "1" argument(s): "A generic error occurred in GDI+."
+                # https://stackoverflow.com/questions/15862810/a-generic-error-occurred-in-gdi-in-bitmap-save-method
+                # This error message is displayed if the path you pass to Bitmap.Save() is invalid (folder doesn't exist etc).
+                #
                 $OldImage.Dispose()                
 
                 If ($PSCmdlet.ShouldProcess("Resized image based on $Path", "save to $OutputPath")) {
