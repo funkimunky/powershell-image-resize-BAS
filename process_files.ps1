@@ -303,9 +303,7 @@ Function Get-Imagepaths{
 Function Get-imagelist{
     [cmdletbinding()]
     param (
-        [Parameter(Position = 0, Mandatory=$true)]
-        [ValidateNotNullOrEmpty()]
-        [System.Array]$paths,
+        [Parameter(Position = 0, Mandatory=$true)][ValidateNotNullOrEmpty()][System.Array]$paths,
         [Int]$Width,
         [Int]$Height,
         [Int]$BatchAmount = 5000
@@ -323,7 +321,7 @@ Function Get-imagelist{
                 $ImageList.Add($_) 
                 $t.Dispose()     
                 if($counter -eq $BatchAmount){
-                    [string]$outputStr = 'batch limit of {0} reached' -f $BatchAmount
+                    [string]$outputStr = 'batch limit of {0} reached' -f $BatchAmount #need to add this to a log out
                     Write-Host $outputStr -ForegroundColor Magenta | Out-Null
                     break outer #breaking named loop https://stackoverflow.com/questions/36025696/break-out-of-inner-loop-only-in-nested-loop
                 }                       
@@ -339,11 +337,13 @@ Function Get-imagelist{
 
 }
 
+
+
 $longerSide = 2500
-Write-Output "Started processing $(Get-Date -Format u)"
+Write-Output "Started processing $(Get-Date -Format u)" #change this to output log file
 $ExcelPaths = Get-pathfile -IncludeExcludePath $PSScriptRoot
 $paths = Get-Imagepaths -ExcelPaths $ExcelPaths
 $image_list = Get-imagelist -paths $paths -Width $longerSide -Height $longerSide -batch 5000
 Resize-Image -ImagePath $image_list -Longerside $longerSide -OverWrite -InterpolationMode Default -SmoothingMode Default -PixelOffsetMode Default
-Write-Output "end processing $(Get-Date -Format u)"
-Write-Output "Origional storage used $Global:OrigionalTotal MB : Storage used after compression $Global:FinalTotal MB)"
+Write-Output "end processing $(Get-Date -Format u)"  #change this to output log file
+Write-Output "Origional storage used $Global:OrigionalTotal MB : Storage used after compression $Global:FinalTotal MB)"  #change this to output log file
